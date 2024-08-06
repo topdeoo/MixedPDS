@@ -5,16 +5,18 @@ void Graph::initialize() {
   m_propagated_count = 0;
 }
 
-void Graph::add_edge(u32 from, u32 to) {
-  if (!m_vertices.contains(from)) {
-    m_vertices.insert(from);
+void Graph::add_edge( u32 from, u32 to ) {
+  if ( !m_vertices.contains( from ) ) {
+    m_vertices.insert( from );
   }
-  if (!m_vertices.contains(to)) {
-    m_vertices.insert(to);
+  if ( !m_vertices.contains( to ) ) {
+    m_vertices.insert( to );
   }
 
-  if (!m_neighbors[from].contains(to)) {
-    m_neighbors[from].insert(to);
-    m_edges.push_back(Edge(from, to));
+  if ( !m_neighbors[from].contains( to ) ) {
+    m_neighbors[from].insert( to );
+    m_edges.push_back( Edge( from, to ) );
   }
 }
+
+void Graph::propagate( u32 vertex ) {}

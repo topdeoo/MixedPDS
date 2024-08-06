@@ -47,7 +47,7 @@ public:
   Problem();
   ~Problem() = default;
 
-  Problem(const Options &);
+  Problem( const Options & );
 
 public:
   void parse();

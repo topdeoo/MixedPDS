@@ -18,6 +18,6 @@ public:
   ~GurobiSolver() = default;
 
 public:
-  void initialize_model(const Graph &);
-  void start(i32 *, i32 *, u32, set<u32> &);
+  void initialize_model( const Graph & );
+  void start( i32 *, i32 *, u32, set<u32> & );
 };
