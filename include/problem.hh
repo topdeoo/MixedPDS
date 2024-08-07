@@ -48,6 +48,14 @@ public:
   Problem( const Options & );
 
 public:
+  inline void set_filename( const std::string &filename ) {
+    m_options.filename = filename;
+  }
+
+  inline bool solved() const {
+    return m_graph->observed_count() == m_graph->vertices_num();
+  }
+
   void parse();
   void alloc_memory();
 
@@ -60,4 +68,7 @@ public:
 
   inline u32 solution_size() const { return m_best_solution.size(); }
   inline const set<u32> &solution() const { return m_best_solution; }
+
+  inline bool *observed_set() const { return m_graph->observed_set(); }
+  inline const set<u32> &vertices() const { return m_graph->vertices(); }
 };

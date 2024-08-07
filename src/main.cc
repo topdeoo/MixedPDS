@@ -1,14 +1,17 @@
 #include "options.hh"
 #include "problem.hh"
 #include "types.hh"
-#include <bits/getopt_core.h>
 #include <boost/program_options.hpp>
+#include <boost/program_options/value_semantic.hpp>
 #include <cstdlib>
 #include <getopt.h>
+#include <iostream>
 #include <sys/resource.h>
 #include <unistd.h>
 
-#include <iostream>
+#include <fmt/color.h>
+#include <fmt/core.h>
+#include <fmt/os.h>
 
 namespace po = boost::program_options;
 
@@ -21,6 +24,9 @@ static u64 process_time() {
 
 int main( int argc, char **argv ) {
   Options opts;
+
+  std::string outputfile = "none";
+
   po::options_description desc( "options" );
 
   desc.add_options()( "filename,f",
@@ -33,7 +39,8 @@ int main( int argc, char **argv ) {
       "milp-time-limit,t", po::value<u32>( &opts.t_milp )->default_value( 16 ),
       "Time limit of the whole algorithm" )(
       "cutoff,c", po::value<u32>( &opts.cutoff_time )->default_value( 1000 ),
-      "Time limit of the whole algorithm" )( " help,h ", "show help infomation" );
+      "Time limit of the whole algorithm" )( "output,o", po::value<std::string>() )(
+      "help,h", "show help infomation" );
 
   try {
 
@@ -47,8 +54,12 @@ int main( int argc, char **argv ) {
 
     po::notify( vm );
 
+    if ( vm.count( "output" ) ) {
+      outputfile = vm["output"].as<std::string>();
+    }
+
   } catch ( const po::error &e ) {
-    std::cerr << "\033[031mError: " << e.what() << "\033[m\n";
+    fmt::print( fmt::fg( fmt::color::red ), "{}\n", e.what() );
     std::cerr << desc << std::endl;
     return EXIT_FAILURE;
   }
@@ -63,7 +74,16 @@ int main( int argc, char **argv ) {
 
   auto _end = process_time();
 
-  std::cout << "[solution] " << instance.solution_size() << " [time] "
-            << _end - _start << " us\n";
+  fmt::println( "[solution size] {0}, [time] {1} us", instance.solution_size(),
+                _end - _start );
+
+  if ( outputfile != "none" ) {
+    auto fp = fmt::output_file( outputfile );
+    fp.print( "{}\n{}\n", _end - _start, instance.solution_size() );
+    for ( auto &v : instance.solution() ) {
+      fp.print( "{} ", v );
+    }
+  }
+
   return EXIT_SUCCESS;
 }

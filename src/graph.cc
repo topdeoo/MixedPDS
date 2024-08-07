@@ -1,9 +1,12 @@
 #include "graph.hh"
 #include "types.hh"
+#include <cstring>
 #include <vector>
 
 void Graph::initialize() {
+  //! Initialize all data structures with correct value
   m_observed = new bool[vertices_num() + 1];
+  std::memset( m_observed, 0, sizeof( bool ) * ( vertices_num() + 1 ) );
   m_observed_count = 0;
 }
 
