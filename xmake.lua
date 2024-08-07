@@ -13,6 +13,9 @@ target("solver.elf")
     -- CXX Flags
     set_warnings("all", "error")
     -- set_optimize("fastest")
+    if is_mode("release") then
+        set_optimize("fastest") 
+    end
     add_includedirs("include")
     add_files("src/*.cc|checker.cc")
     add_packages("unordered_dense")
