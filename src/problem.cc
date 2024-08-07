@@ -24,6 +24,8 @@ void Problem::parse() {
   auto fp = std::freopen( m_options.filename.c_str(), "r", stdin );
 
   if ( fp == nullptr ) {
+    std::cerr << "\033[31mError: Failed to open " << m_options.filename
+              << "\033[m\n";
     exit( EXIT_FAILURE );
   }
 

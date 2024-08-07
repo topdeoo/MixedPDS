@@ -2,6 +2,7 @@
 #include "problem.hh"
 #include "types.hh"
 #include <bits/getopt_core.h>
+#include <boost/program_options.hpp>
 #include <cstdlib>
 #include <getopt.h>
 #include <sys/resource.h>
@@ -9,40 +10,7 @@
 
 #include <iostream>
 
-const static option long_opts[] = {
-    { "help", no_argument, 0, 0 },
-    { "filename", required_argument, 0, 'f' },
-    { "number-of-solution", required_argument, 0, 'n' },
-    { "max-age", required_argument, 0, 'a' },
-    { "milp-time-limit", required_argument, 0, 't' },
-    { "cpu-epoch", required_argument, 0, 'e' },
-    { 0, 0, 0, 0 } };
-
-void show_help() {
-  std::cerr << R"(Usage:
- ./solver.elf [options]
-
-Options: 
-  -f, --filename <filename>
-	 Input instance filename
-
-  -n, --number-of-solution
-	 Number of solution constructions per iteration
-
-  -a, --age-max <number>
-	 Upper limit for the age-values
-
-  -t, --milp-time-limit <number>
-	 Time limit for MILP Solver per iteration
-  
-  -e, --cpu-epoch <number>
-   Time limit of the whole algorithm
-
-  -h,--help
-	 Show help
-  
-  )";
-}
+namespace po = boost::program_options;
 
 static u64 process_time() {
   struct rusage r;
@@ -52,39 +20,37 @@ static u64 process_time() {
 }
 
 int main( int argc, char **argv ) {
-
-  std::cerr << "Current working directory: " << getcwd( nullptr, 0 ) << std::endl;
-
-  char c;
-  int opt_index = 0;
   Options opts;
+  po::options_description desc( "options" );
 
-  while (
-      ( c = getopt_long( argc, argv, "f:n:a:t:e:h", long_opts, &opt_index ) ) ) {
-    if ( c == -1 ) {
-      break;
+  desc.add_options()( "filename,f",
+                      po::value<std::string>( &opts.filename )->required(),
+                      "Input instance filename" )(
+      "number-of-solution,n", po::value<u32>( &opts.na )->default_value( 1 ),
+      "Number of solution constructions per iteration" )(
+      "age-max,a", po::value<i32>( &opts.age_max )->default_value( 4 ),
+      "Upper limit for the age-values" )(
+      "milp-time-limit,t", po::value<u32>( &opts.t_milp )->default_value( 16 ),
+      "Time limit of the whole algorithm" )(
+      "cutoff,c", po::value<u32>( &opts.cutoff_time )->default_value( 1000 ),
+      "Time limit of the whole algorithm" )( " help,h ", "show help infomation" );
+
+  try {
+
+    po::variables_map vm;
+    po::store( po::parse_command_line( argc, argv, desc ), vm );
+
+    if ( vm.count( "help" ) ) {
+      std::cerr << desc << std::endl;
+      return EXIT_SUCCESS;
     }
-    switch ( c ) {
-    case 'f':
-      opts.filename = std::string( optarg );
-      break;
-    case 'n':
-      opts.na = static_cast<u32>( std::atoi( optarg ) );
-      break;
-    case 'a':
-      opts.age_max = std::atoi( optarg );
-      break;
-    case 't':
-      opts.t_milp = static_cast<u32>( std::atoi( optarg ) );
-      break;
-    case 'e':
-      opts.cutoff_time = static_cast<u32>( std::atoi( optarg ) );
-      break;
-    case 'h':
-    default:
-      show_help();
-      exit( EXIT_FAILURE );
-    }
+
+    po::notify( vm );
+
+  } catch ( const po::error &e ) {
+    std::cerr << "\033[031mError: " << e.what() << "\033[m\n";
+    std::cerr << desc << std::endl;
+    return EXIT_FAILURE;
   }
 
   Problem instance( opts );
@@ -99,6 +65,5 @@ int main( int argc, char **argv ) {
 
   std::cout << "[solution] " << instance.solution_size() << " [time] "
             << _end - _start << " us\n";
-
-  return 0;
+  return EXIT_SUCCESS;
 }
