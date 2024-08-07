@@ -56,6 +56,14 @@ public:
     return m_graph->observed_count() == m_graph->vertices_num();
   }
 
+  inline bool is_fixed_in( u32 vertex ) const {
+    return age0[vertex] == -1 && age1[vertex] >= 0;
+  }
+
+  inline bool is_fixed_out( u32 vertex ) const {
+    return age1[vertex] == -1 && age0[vertex] >= 0;
+  }
+
   void parse();
   void alloc_memory();
 
@@ -65,6 +73,8 @@ public:
   void grasp();
   void adaptive();
   void start();
+
+  void initialize_solver();
 
   inline u32 solution_size() const { return m_best_solution.size(); }
   inline const set<u32> &solution() const { return m_best_solution; }

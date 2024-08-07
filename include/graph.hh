@@ -35,6 +35,9 @@ public:
   inline u32 observed_count() const { return m_observed_count; }
 
   inline bool is_observed( u32 vertex ) const { return m_observed[vertex]; }
+  inline bool is_non_propagating( u32 vertex ) const {
+    return m_non_propagating.contains( vertex );
+  }
 
   inline void set_observed_count( u32 count ) { m_observed_count = count; }
   inline void set_non_propagating( u32 vertex ) {

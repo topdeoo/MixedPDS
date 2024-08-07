@@ -1,8 +1,8 @@
 #include "solver.hh"
 #include "types.hh"
 #include <gurobi_c++.h>
+#include <gurobi_c.h>
 #include <memory>
-#include <utility>
 
 GRBEnv &get_gurobi_envrionment() {
   // TODO : 设置日志的输出位置
@@ -13,20 +13,20 @@ GRBEnv &get_gurobi_envrionment() {
 GurobiSolver::GurobiSolver()
     : m_model( std::make_unique<GRBModel>( get_gurobi_envrionment() ) ), m_xi() {}
 
-void GurobiSolver::initialize_model( const Graph &graph ) {
-  map<u32, GRBVar> si;
-  map<std::pair<u32, u32>, GRBVar> pe;
-  //? how to calcuate `M`
-  const fp64 M = static_cast<fp64>( graph.vertices_num() * 2 );
-  {
-    for ( auto &v : graph.vertices() ) {
-      //! $x_i \in \{ 0, 1 \}$
-      m_xi.insert( { v, m_model->addVar( 0, M, 1, GRB_BINARY ) } );
-      //! $(s_i \geq 1 ) \and (s_i \leq |V|)$
-      si.insert( { v, m_model->addVar( 1, M, 0, GRB_INTEGER ) } );
+void GurobiSolver::start( u32 time_limit, set<u32> &solution ) {
+  m_model->set( GRB_StringParam_LogFile, "/dev/null" );
+  m_model->set( GRB_IntParam_LogToConsole, false );
+  m_model->set( GRB_DoubleParam_TimeLimit, static_cast<fp64>( time_limit ) );
+
+  m_model->optimize();
+
+  if ( m_model->get( GRB_IntAttr_Status ) == GRB_OPTIMAL ) {
+    solution.clear();
+    auto &xi = m_xi;
+    for ( auto [v, var] : xi ) {
+      if ( var.get( GRB_DoubleAttr_X ) > 0.5 ) {
+        solution.insert( v );
+      }
     }
   }
 }
-
-void GurobiSolver::start( i32 *age0, i32 *age1, u32 time_limit,
-                          set<u32> &solution ) {}

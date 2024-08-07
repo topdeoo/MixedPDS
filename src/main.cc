@@ -79,7 +79,7 @@ int main( int argc, char **argv ) {
 
   if ( outputfile != "none" ) {
     auto fp = fmt::output_file( outputfile );
-    fp.print( "{}\n{}\n", _end - _start, instance.solution_size() );
+    fp.print( "{} us\n{}\n", _end - _start, instance.solution_size() );
     for ( auto &v : instance.solution() ) {
       fp.print( "{} ", v );
     }
