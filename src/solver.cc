@@ -1,7 +1,6 @@
 #include "solver.hh"
 #include "types.hh"
 #include <gurobi_c++.h>
-#include <gurobi_c.h>
 #include <memory>
 #include <utility>
 
@@ -12,8 +11,7 @@ GRBEnv &get_gurobi_envrionment() {
 }
 
 GurobiSolver::GurobiSolver()
-    : m_model( std::make_unique<GRBModel>( get_gurobi_envrionment() ) ),
-      m_xi() {}
+    : m_model( std::make_unique<GRBModel>( get_gurobi_envrionment() ) ), m_xi() {}
 
 void GurobiSolver::initialize_model( const Graph &graph ) {
   map<u32, GRBVar> si;

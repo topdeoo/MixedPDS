@@ -38,7 +38,9 @@ Options:
    Time limit of the whole algorithm
 
   -h,--help
-	 Show help)";
+	 Show help
+  
+  )";
 }
 
 static u64 process_time() {
@@ -54,12 +56,8 @@ int main( int argc, char **argv ) {
   Options opts;
 
   while (
-      ( c = getopt_long( argc, argv, "f:n:a:t:h", long_opts, &opt_index ) ) ) {
+      ( c = getopt_long( argc, argv, "f:n:a:t:e:h", long_opts, &opt_index ) ) ) {
     if ( c == -1 ) {
-      if ( opt_index == 0 ) {
-        show_help();
-        EXIT_FAILURE;
-      }
       break;
     }
     switch ( c ) {
@@ -81,7 +79,7 @@ int main( int argc, char **argv ) {
     case 'h':
     default:
       show_help();
-      EXIT_FAILURE;
+      exit( EXIT_FAILURE );
     }
   }
 

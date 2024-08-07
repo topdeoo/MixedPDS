@@ -4,9 +4,9 @@
 #include "solver.hh"
 #include "types.hh"
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <fstream>
 #include <memory>
 
 Problem::Problem() {
@@ -20,38 +20,43 @@ Problem::Problem( const Options &opt ) : m_options( opt ) {
 }
 
 void Problem::parse() {
-  std::ifstream fin( m_options.filename );
+  auto fp = std::freopen( m_options.filename.c_str(), "r", stdin );
+
+  if ( fp == nullptr ) {
+    exit( EXIT_FAILURE );
+  }
+
   std::string t;
-  fin >> t;
+  std::cin >> t;
 
   //* Input the whole graph
   u32 n, m, u, v;
-  fin >> n >> m;
+  std::cin >> n >> m;
   for ( u32 i = 0; i < m; i++ ) {
-    fin >> u >> v;
+    std::cin >> u >> v;
     m_graph->add_edge( u, v );
     m_graph->add_edge( v, u );
   }
 
   //* Input the pre-dominating set
-  fin >> n;
+  std::cin >> n;
   for ( u32 i = 0; i < n; i++ ) {
-    fin >> v;
+    std::cin >> v;
     m_pre_solution.insert( v );
   }
 
   //* Input the exclude set
-  fin >> n;
+  std::cin >> n;
   for ( u32 i = 0; i < n; i++ ) {
-    fin >> v;
+    std::cin >> v;
     m_excluded.insert( v );
   }
 
   //* Input the non-propagating set
-  fin >> n;
+  std::cin >> n;
   for ( u32 i = 0; i < n; i++ ) {
-    fin >> v;
-    m_non_propagating.insert( v );
+    std::cin >> v;
+    m_graph->set_non_propagating( v );
   }
 
   alloc_memory();
@@ -65,41 +70,51 @@ void Problem::alloc_memory() {
   std::fill( age1, age1 + m_graph->vertices_num() + 1, -1 );
 
   m_generate_solutions = new bool[m_graph->vertices_num() + 1]();
+  m_generate_solutions_size = 0;
   m_pre_processing_solution = new bool[m_graph->vertices_num() + 1]();
-  m_propagate_set = new bool[m_graph->vertices_num() + 1]();
-  m_propagate_count = 0;
+  m_pre_observed_set = new bool[m_graph->vertices_num() + 1]();
+  m_pre_observed_count = 0;
 
   std::srand( std::time( nullptr ) );
 
   m_graph->initialize();
 }
 
+void Problem::set_dominanting( u32 vertex ) {
+  m_generate_solutions[vertex] = true;
+  std::vector<u32> queue;
+  m_graph->observe_one( vertex, vertex, queue );
+  for ( auto &w : m_graph->neighbors( vertex ) ) {
+    m_graph->observe_one( w, vertex, queue );
+  }
+  m_graph->propagate( vertex, queue );
+}
+
 void Problem::preprocess() {
   std::memset( m_generate_solutions, 0,
                ( m_graph->vertices_num() + 1 ) * sizeof( bool ) );
-  std::memset( m_graph->propagated_set(), 0,
+  std::memset( m_graph->observed_set(), 0,
                sizeof( bool ) * ( m_graph->vertices_num() + 1 ) );
-  m_graph->set_propagate_count( 0 );
+  m_graph->set_observed_count( 0 );
   for ( auto &v : m_pre_solution ) {
-    m_generate_solutions[v] = true;
-    m_graph->propagate( v );
+    set_dominanting( v );
   }
-  std::memcpy( m_propagate_set, m_graph->propagated_set(),
+  std::memcpy( m_pre_observed_set, m_graph->observed_set(),
                m_graph->vertices_num() + 1 );
   std::memcpy( m_pre_processing_solution, m_generate_solutions,
                sizeof( bool ) * ( m_graph->vertices_num() + 1 ) );
-  m_propagate_count = m_graph->propagated_count();
+  m_pre_observed_count = m_graph->observed_count();
 }
 
 void Problem::grasp() {
   std::memcpy( m_generate_solutions, m_pre_processing_solution,
                ( m_graph->vertices_num() + 1 ) * sizeof( bool ) );
-  std::memcpy( m_graph->propagated_set(), m_propagate_set,
+  std::memcpy( m_graph->observed_set(), m_pre_observed_set,
                sizeof( bool ) * ( m_graph->vertices_num() + 1 ) );
-  m_graph->set_propagate_count( m_propagate_count );
+  m_graph->set_observed_count( m_pre_observed_count );
   //* Initialize solution with GRASP
   // TODO: Use initialize method in FSS
-  while ( m_graph->propagated_count() != m_graph->vertices_num() ) {
+  while ( m_graph->observed_count() != m_graph->vertices_num() ) {
     u32 select_v = 0;
     fp64 score = 0;
     for ( auto &v : m_graph->vertices() ) {
@@ -113,8 +128,7 @@ void Problem::grasp() {
         }
       }
     }
-    m_generate_solutions[select_v] = true;
-    m_graph->propagate( select_v );
+    set_dominanting( select_v );
   }
 }
 
@@ -146,27 +160,28 @@ void Problem::adaptive() {
 }
 
 void Problem::start() {
-  preprocess();
-  u32 timestamp = 0, cutoff = m_options.cutoff_time;
-  while ( timestamp < cutoff ) {
-    //* Generate $n_a$ solutions
-    for ( u32 i = 0; i < m_options.na; i++ ) {
-      grasp();
-      for ( auto &v : m_graph->vertices() ) {
-        if ( m_generate_solutions[v] && age1[v] == -1 ) {
-          age1[v] = 0;
-        }
-        if ( !m_generate_solutions[v] && age0[v] == -1 ) {
-          age0[v] = 0;
-        }
-      }
-    }
-    //* Solve problem with MILP solver
-    m_solver->start( age0, age1, m_options.t_milp, m_current_solution );
-    if ( m_current_solution.size() < m_best_solution.size() ) {
-      m_best_solution = m_current_solution;
-    }
-    adaptive();
-    timestamp++;
-  }
+  // preprocess();
+  // u32 timestamp = 0, cutoff = m_options.cutoff_time;
+  grasp();
+  // while ( timestamp < cutoff ) {
+  //   //* Generate $n_a$ solutions
+  //   for ( u32 i = 0; i < m_options.na; i++ ) {
+  //     grasp();
+  //     for ( auto &v : m_graph->vertices() ) {
+  //       if ( m_generate_solutions[v] && age1[v] == -1 ) {
+  //         age1[v] = 0;
+  //       }
+  //       if ( !m_generate_solutions[v] && age0[v] == -1 ) {
+  //         age0[v] = 0;
+  //       }
+  //     }
+  //   }
+  //   //* Solve problem with MILP solver
+  //   m_solver->start( age0, age1, m_options.t_milp, m_current_solution );
+  //   if ( m_current_solution.size() < m_best_solution.size() ) {
+  //     m_best_solution = m_current_solution;
+  //   }
+  //   adaptive();
+  //   timestamp++;
+  // }
 }

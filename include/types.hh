@@ -13,7 +13,6 @@ typedef int i32;
 typedef float fp32;
 typedef double fp64;
 
-template <typename K, typename V>
-using map = ankerl::unordered_dense::map<K, V>;
+template <typename K, typename V> using map = ankerl::unordered_dense::map<K, V>;
 
 template <typename K> using set = ankerl::unordered_dense::set<K>;

@@ -28,20 +28,18 @@ private:
   //* Excluded vertices set
   set<u32> m_excluded;
 
-  //* Non-propagating vertices set
-  set<u32> m_non_propagating;
-
   //* ages array to generating a better solution
   i32 *age0;
   i32 *age1;
 
   //* generate solutions
   bool *m_generate_solutions;
+  u32 m_generate_solutions_size;
 
   //* Pre-processing solution
   bool *m_pre_processing_solution;
-  bool *m_propagate_set;
-  u32 m_propagate_count;
+  bool *m_pre_observed_set;
+  u32 m_pre_observed_count;
 
 public:
   Problem();
@@ -52,6 +50,8 @@ public:
 public:
   void parse();
   void alloc_memory();
+
+  void set_dominanting( u32 );
 
   void preprocess();
   void grasp();
