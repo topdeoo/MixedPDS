@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <getopt.h>
 #include <sys/resource.h>
+#include <unistd.h>
 
 #include <iostream>
 
@@ -51,6 +52,9 @@ static u64 process_time() {
 }
 
 int main( int argc, char **argv ) {
+
+  std::cerr << "Current working directory: " << getcwd( nullptr, 0 ) << std::endl;
+
   char c;
   int opt_index = 0;
   Options opts;
@@ -93,7 +97,8 @@ int main( int argc, char **argv ) {
 
   auto _end = process_time();
 
-  std::cout << "[solution] " << "[time] " << _end - _start << " us\n";
+  std::cout << "[solution] " << instance.solution_size() << " [time] "
+            << _end - _start << " us\n";
 
   return 0;
 }

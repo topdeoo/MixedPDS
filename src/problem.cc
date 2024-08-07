@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
 #include <memory>
 
 Problem::Problem() {
@@ -83,11 +84,11 @@ void Problem::alloc_memory() {
 void Problem::set_dominanting( u32 vertex ) {
   m_generate_solutions[vertex] = true;
   std::vector<u32> queue;
-  m_graph->observe_one( vertex, vertex, queue );
+  m_graph->observe_one( vertex, queue );
   for ( auto &w : m_graph->neighbors( vertex ) ) {
-    m_graph->observe_one( w, vertex, queue );
+    m_graph->observe_one( w, queue );
   }
-  m_graph->propagate( vertex, queue );
+  m_graph->propagate( queue );
 }
 
 void Problem::preprocess() {
@@ -163,6 +164,11 @@ void Problem::start() {
   // preprocess();
   // u32 timestamp = 0, cutoff = m_options.cutoff_time;
   grasp();
+  for ( auto &v : m_graph->vertices() ) {
+    if ( m_generate_solutions[v] ) {
+      m_best_solution.insert( v );
+    }
+  }
   // while ( timestamp < cutoff ) {
   //   //* Generate $n_a$ solutions
   //   for ( u32 i = 0; i < m_options.na; i++ ) {

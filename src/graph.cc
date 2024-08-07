@@ -17,11 +17,12 @@ void Graph::add_edge( u32 from, u32 to ) {
 
   if ( !m_neighbors[from].contains( to ) ) {
     m_neighbors[from].insert( to );
+    m_unobserved_degree[from]++;
     m_edges.push_back( Edge( from, to ) );
   }
 }
 
-void Graph::observe_one( u32 vertex, u32 origin, std::vector<u32> &queue ) {
+void Graph::observe_one( u32 vertex, std::vector<u32> &queue ) {
   if ( !is_observed( vertex ) ) {
     m_observed[vertex] = true;
     m_observed_count++;
@@ -38,4 +39,17 @@ void Graph::observe_one( u32 vertex, u32 origin, std::vector<u32> &queue ) {
   }
 }
 
-void Graph::propagate( u32 vertex, std::vector<u32> &queue ) {}
+void Graph::propagate( std::vector<u32> &queue ) {
+  while ( !queue.empty() ) {
+    auto v = queue.back();
+    queue.pop_back();
+    if ( is_observed( v ) && !m_non_propagating.contains( v ) &&
+         m_unobserved_degree[v] == 1 ) {
+      for ( auto &w : m_neighbors[v] ) {
+        if ( !is_observed( w ) ) {
+          observe_one( w, queue );
+        }
+      }
+    }
+  }
+}

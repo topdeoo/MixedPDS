@@ -50,6 +50,6 @@ public:
   void initialize();
   void add_edge( u32 from, u32 to );
 
-  void propagate( u32 vertex, std::vector<u32> &queue );
-  void observe_one( u32 vertex, u32 origin, std::vector<u32> &queue );
+  void propagate( std::vector<u32> &queue );
+  void observe_one( u32 vertex, std::vector<u32> &queue );
 };

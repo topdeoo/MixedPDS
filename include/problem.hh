@@ -57,4 +57,7 @@ public:
   void grasp();
   void adaptive();
   void start();
+
+  inline u32 solution_size() const { return m_best_solution.size(); }
+  inline const set<u32> &solution() const { return m_best_solution; }
 };

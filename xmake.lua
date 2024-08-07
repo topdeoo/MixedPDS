@@ -12,6 +12,7 @@ target("solver.elf")
     -- CXX Flags
     set_warnings("all", "error")
     -- set_optimize("fastest")
+    add_cxxflags("-fstandalone-debug")
     add_includedirs("include")
     add_files("src/*.cc")
     add_packages("unordered_dense")
