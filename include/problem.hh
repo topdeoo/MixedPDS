@@ -5,13 +5,15 @@
 #include "solver.hh"
 #include <memory>
 
+u64 process_time();
+
 class Problem {
 private:
   //* Options
   Options m_options;
 
   //* Graph
-  std::unique_ptr<Graph> m_graph;
+  Graph m_graph;
 
   //* MILP Solver
   std::unique_ptr<GurobiSolver> m_solver;
@@ -41,9 +43,19 @@ private:
   bool *m_pre_observed_set;
   u32 m_pre_observed_count;
 
+  bool m_solved;
+
+  bool m_reduction_solved;
+
 public:
   Problem();
-  ~Problem() = default;
+  ~Problem() {
+    delete[] age0;
+    delete[] age1;
+    delete[] m_generate_solutions;
+    delete[] m_pre_processing_solution;
+    delete[] m_pre_observed_set;
+  };
 
   Problem( const Options & );
 
@@ -52,9 +64,8 @@ public:
     m_options.filename = filename;
   }
 
-  inline bool solved() const {
-    return m_graph->observed_count() == m_graph->vertices_num();
-  }
+  inline bool solved() const { return m_solved; }
+  inline bool reduction_solved() const { return m_reduction_solved; }
 
   inline bool is_fixed_in( u32 vertex ) const {
     return age0[vertex] == -1 && age1[vertex] >= 0;
@@ -79,6 +90,6 @@ public:
   inline u32 solution_size() const { return m_best_solution.size(); }
   inline const set<u32> &solution() const { return m_best_solution; }
 
-  inline bool *observed_set() const { return m_graph->observed_set(); }
-  inline const set<u32> &vertices() const { return m_graph->vertices(); }
+  inline bool *observed_set() const { return m_graph.observed_set(); }
+  inline const set<u32> &vertices() const { return m_graph.vertices(); }
 };

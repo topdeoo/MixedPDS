@@ -6,7 +6,6 @@
 #include <cstdlib>
 #include <getopt.h>
 #include <iostream>
-#include <sys/resource.h>
 #include <unistd.h>
 
 #include <fmt/color.h>
@@ -14,13 +13,6 @@
 #include <fmt/os.h>
 
 namespace po = boost::program_options;
-
-static u64 process_time() {
-  struct rusage r;
-  getrusage( RUSAGE_SELF, &r );
-  auto t = r.ru_utime;
-  return t.tv_usec;
-}
 
 int main( int argc, char **argv ) {
   Options opts;
@@ -79,11 +71,14 @@ int main( int argc, char **argv ) {
 
   if ( outputfile != "none" ) {
     auto fp = fmt::output_file( outputfile );
+    if ( instance.reduction_solved() ) {
+      fp.print( "r " );
+    }
     fp.print( "{} us\n{}\n", _end - _start, instance.solution_size() );
     for ( auto &v : instance.solution() ) {
       fp.print( "{} ", v );
     }
   }
 
-  return EXIT_SUCCESS;
+  return 0;
 }

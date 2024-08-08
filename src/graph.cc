@@ -18,6 +18,8 @@ void Graph::add_edge( u32 from, u32 to ) {
     m_vertices.insert( to );
   }
 
+  m_max_vertex = std::max( m_max_vertex, std::max( from, to ) );
+
   if ( !m_neighbors[from].contains( to ) ) {
     m_neighbors[from].insert( to );
     m_unobserved_degree[from]++;

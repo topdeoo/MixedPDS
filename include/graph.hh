@@ -14,6 +14,7 @@ class Graph {
 private:
   // ? use vector instead of set
   set<u32> m_vertices;
+  u32 m_max_vertex;
   std::vector<Edge> m_edges;
   map<u32, set<u32>> m_neighbors;
 
@@ -28,11 +29,15 @@ private:
 
 public:
   Graph() = default;
-  ~Graph() = default;
+  ~Graph() { delete[] m_observed; };
 
 public:
-  inline u32 vertices_num() const { return m_vertices.size(); }
+  inline u32 vertices_num() const { return m_max_vertex; }
   inline u32 observed_count() const { return m_observed_count; }
+
+  inline bool has_vertex( u32 vertex ) const {
+    return m_vertices.contains( vertex );
+  }
 
   inline bool is_observed( u32 vertex ) const { return m_observed[vertex]; }
   inline bool is_non_propagating( u32 vertex ) const {
@@ -48,7 +53,7 @@ public:
   inline const std::vector<Edge> &edges() const { return m_edges; }
   inline const set<u32> &neighbors( u32 vertex ) { return m_neighbors[vertex]; }
   inline u32 degree( u32 vertex ) const { return m_neighbors.at( vertex ).size(); }
-  inline bool *observed_set() { return m_observed; }
+  inline bool *observed_set() const { return m_observed; }
 
   void initialize();
   void add_edge( u32 from, u32 to );

@@ -14,7 +14,7 @@ GurobiSolver::GurobiSolver()
     : m_model( std::make_unique<GRBModel>( get_gurobi_envrionment() ) ), m_xi() {}
 
 void GurobiSolver::start( u32 time_limit, set<u32> &solution ) {
-  m_model->set( GRB_StringParam_LogFile, "/dev/null" );
+  m_model->set( GRB_StringParam_LogFile, "gurobi.log" );
   m_model->set( GRB_IntParam_LogToConsole, false );
   m_model->set( GRB_DoubleParam_TimeLimit, static_cast<fp64>( time_limit ) );
 
