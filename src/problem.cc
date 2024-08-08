@@ -224,15 +224,15 @@ void Problem::parse() {
 
 void Problem::alloc_memory() {
   // TODO: More array data structure
-  age0 = new i32[m_graph.vertices_num() + 1];
-  age1 = new i32[m_graph.vertices_num() + 1];
-  std::fill( age0, age0 + m_graph.vertices_num() + 1, -1 );
-  std::fill( age1, age1 + m_graph.vertices_num() + 1, -1 );
+  age0 = new i32[m_graph.max_vertex() + 1];
+  age1 = new i32[m_graph.max_vertex() + 1];
+  std::fill( age0, age0 + m_graph.max_vertex() + 1, -1 );
+  std::fill( age1, age1 + m_graph.max_vertex() + 1, -1 );
 
-  m_generate_solutions = new bool[m_graph.vertices_num() + 1]();
+  m_generate_solutions = new bool[m_graph.max_vertex() + 1]();
   m_generate_solutions_size = 0;
-  m_pre_processing_solution = new bool[m_graph.vertices_num() + 1]();
-  m_pre_observed_set = new bool[m_graph.vertices_num() + 1]();
+  m_pre_processing_solution = new bool[m_graph.max_vertex() + 1]();
+  m_pre_observed_set = new bool[m_graph.max_vertex() + 1]();
   m_pre_observed_count = 0;
 
   m_solved = false;
@@ -263,9 +263,9 @@ void Problem::preprocess() {
   }
 
   std::memset( m_generate_solutions, 0,
-               ( m_graph.vertices_num() + 1 ) * sizeof( bool ) );
+               ( m_graph.max_vertex() + 1 ) * sizeof( bool ) );
   std::memset( m_graph.observed_set(), 0,
-               sizeof( bool ) * ( m_graph.vertices_num() + 1 ) );
+               sizeof( bool ) * ( m_graph.max_vertex() + 1 ) );
   m_graph.set_observed_count( 0 );
   for ( auto &v : m_pre_solution ) {
     if ( m_graph.has_vertex( v ) ) {
@@ -273,17 +273,17 @@ void Problem::preprocess() {
     }
   }
   std::memcpy( m_pre_observed_set, m_graph.observed_set(),
-               m_graph.vertices_num() + 1 );
+               m_graph.max_vertex() + 1 );
   std::memcpy( m_pre_processing_solution, m_generate_solutions,
-               sizeof( bool ) * ( m_graph.vertices_num() + 1 ) );
+               sizeof( bool ) * ( m_graph.max_vertex() + 1 ) );
   m_pre_observed_count = m_graph.observed_count();
 }
 
 void Problem::grasp() {
   std::memcpy( m_generate_solutions, m_pre_processing_solution,
-               ( m_graph.vertices_num() + 1 ) * sizeof( bool ) );
+               ( m_graph.max_vertex() + 1 ) * sizeof( bool ) );
   std::memcpy( m_graph.observed_set(), m_pre_observed_set,
-               sizeof( bool ) * ( m_graph.vertices_num() + 1 ) );
+               sizeof( bool ) * ( m_graph.max_vertex() + 1 ) );
   m_graph.set_observed_count( m_pre_observed_count );
   //* Initialize solution with GRASP
   // TODO: Use initialize method in FSS
@@ -391,13 +391,12 @@ void Problem::start() {
   if ( m_solved ) {
     return;
   }
-  u64 timestamp = process_time(),
-      cutoff = static_cast<u64>( m_options.cutoff_time );
-  u32 counter = 0;
+  u64 timestamp = 0, cutoff = static_cast<u64>( m_options.cutoff_time * 1000000 );
+  u32 counter = 0, non_imporve = 0;
   for ( auto &v : m_graph.vertices() ) {
     m_best_solution.insert( v );
   }
-  while ( timestamp < cutoff ) {
+  while ( timestamp < cutoff && non_imporve <= 50 ) {
     //* Generate $n_a$ solutions
     for ( u32 i = 0; i < m_options.na; i++ ) {
       grasp();
@@ -413,14 +412,23 @@ void Problem::start() {
     //* Solve problem with MILP solver
     initialize_solver();
     m_solver->start( m_options.t_milp, m_current_solution );
-    if ( m_current_solution.size() < m_best_solution.size() ) {
+    if ( m_current_solution.size() == m_best_solution.size() ) {
+      non_imporve += 1;
+    } else if ( m_current_solution.size() < m_best_solution.size() ) {
       m_best_solution = m_current_solution;
     }
+
     adaptive();
     counter += 1;
     if ( counter == 10 ) {
-      timestamp = process_time();
+      timestamp = process_time() - timestamp;
       counter = 0;
     }
+  }
+}
+
+void Problem::apply_solution() {
+  for ( auto &v : m_pre_solution ) {
+    m_best_solution.insert( v );
   }
 }

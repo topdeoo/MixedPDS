@@ -31,8 +31,10 @@ int main( int argc, char **argv ) {
       "milp-time-limit,t", po::value<u32>( &opts.t_milp )->default_value( 16 ),
       "Time limit of the whole algorithm" )(
       "cutoff,c", po::value<u32>( &opts.cutoff_time )->default_value( 1000 ),
-      "Time limit of the whole algorithm" )( "output,o", po::value<std::string>() )(
-      "help,h", "show help infomation" );
+      "Time limit of the whole algorithm" )( "output,o", po::value<std::string>(),
+                                             "Output filename" )(
+      "optimal,b", po::value<u32>(), "Optimal solution" )( "help,h",
+                                                           "show help infomation" );
 
   try {
 
@@ -65,6 +67,8 @@ int main( int argc, char **argv ) {
   instance.start();
 
   auto _end = process_time();
+
+  instance.apply_solution();
 
   fmt::println( "[solution size] {0}, [time] {1} us", instance.solution_size(),
                 _end - _start );

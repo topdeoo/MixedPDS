@@ -32,7 +32,8 @@ public:
   ~Graph() { delete[] m_observed; };
 
 public:
-  inline u32 vertices_num() const { return m_max_vertex; }
+  inline u32 vertices_num() const { return m_vertices.size(); }
+  inline u32 max_vertex() const { return m_max_vertex; }
   inline u32 observed_count() const { return m_observed_count; }
 
   inline bool has_vertex( u32 vertex ) const {

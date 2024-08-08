@@ -5,8 +5,8 @@
 
 void Graph::initialize() {
   //! Initialize all data structures with correct value
-  m_observed = new bool[vertices_num() + 1];
-  std::memset( m_observed, 0, sizeof( bool ) * ( vertices_num() + 1 ) );
+  m_observed = new bool[m_max_vertex + 1];
+  std::memset( m_observed, 0, sizeof( bool ) * ( m_max_vertex + 1 ) );
   m_observed_count = 0;
 }
 

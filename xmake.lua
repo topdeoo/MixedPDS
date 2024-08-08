@@ -12,10 +12,12 @@ target("solver.elf")
     set_kind("binary")
     -- CXX Flags
     set_warnings("all", "error")
-    add_cxxflags("-fstandalone-debug")
-    add_cxflags("-fsanitize=address")
-    add_ldflags("-fsanitize=address")
-    -- set_optimize("fastest")
+    if is_mode("debug") then 
+        add_cxxflags("-fstandalone-debug")
+        add_cxflags("-fsanitize=address")
+        add_ldflags("-fsanitize=address")
+    end 
+    
     if is_mode("release") then
         set_optimize("fastest") 
     end
