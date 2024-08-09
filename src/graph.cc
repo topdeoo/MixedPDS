@@ -5,9 +5,23 @@
 
 void Graph::initialize() {
   //! Initialize all data structures with correct value
-  m_observed = new bool[m_max_vertex + 1];
-  std::memset( m_observed, 0, sizeof( bool ) * ( m_max_vertex + 1 ) );
+  m_observed = new bool[m_max_vertex + 1]();
   m_observed_count = 0;
+  for ( auto &v : m_vertices ) {
+    m_unobserved_degree[v] = degree( v );
+  }
+}
+
+void Graph::stash() {
+  for ( auto &v : m_vertices ) {
+    m_original_unobserved_degree[v] = m_unobserved_degree[v];
+  }
+}
+
+void Graph::reset() {
+  for ( auto &v : m_vertices ) {
+    m_unobserved_degree[v] = m_original_unobserved_degree[v];
+  }
 }
 
 void Graph::add_edge( u32 from, u32 to ) {
@@ -22,7 +36,6 @@ void Graph::add_edge( u32 from, u32 to ) {
 
   if ( !m_neighbors[from].contains( to ) ) {
     m_neighbors[from].insert( to );
-    m_unobserved_degree[from]++;
     m_edges.push_back( Edge( from, to ) );
   }
 }

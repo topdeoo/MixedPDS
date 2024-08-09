@@ -40,6 +40,7 @@ private:
 
   //* Pre-processing solution
   bool *m_pre_processing_solution;
+  u32 m_pre_processing_solution_size;
   bool *m_pre_observed_set;
   u32 m_pre_observed_count;
 

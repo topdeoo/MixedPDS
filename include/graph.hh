@@ -21,6 +21,8 @@ private:
   //* Unobserved degree
   map<u32, u32> m_unobserved_degree;
 
+  map<u32, u32> m_original_unobserved_degree;
+
   //* Non-propagating vertices set
   set<u32> m_non_propagating;
 
@@ -57,6 +59,8 @@ public:
   inline bool *observed_set() const { return m_observed; }
 
   void initialize();
+  void stash();
+  void reset();
   void add_edge( u32 from, u32 to );
 
   void propagate( std::vector<u32> &queue );

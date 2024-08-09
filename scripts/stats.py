@@ -14,6 +14,7 @@ for file in solution_files:
     with open(file, 'r') as f:
         lines = f.readlines()
     result = {}
+    result["instance_name"] = file.split("/")[-1].split(".")[0]
     timeline = lines[0].strip().split(" ")
     if timeline[0] == 'r':
         result["solve time"] = timeline[1] + " us"

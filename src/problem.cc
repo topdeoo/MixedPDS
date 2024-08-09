@@ -9,6 +9,7 @@
 #include <cstring>
 #include <fcntl.h>
 #include <fmt/color.h>
+#include <fmt/core.h>
 #include <gurobi_c++.h>
 #include <gurobi_c.h>
 #include <iostream>
@@ -220,6 +221,8 @@ void Problem::parse() {
   }
 
   alloc_memory();
+
+  m_graph.initialize();
 }
 
 void Problem::alloc_memory() {
@@ -234,15 +237,15 @@ void Problem::alloc_memory() {
   m_pre_processing_solution = new bool[m_graph.max_vertex() + 1]();
   m_pre_observed_set = new bool[m_graph.max_vertex() + 1]();
   m_pre_observed_count = 0;
+  m_pre_processing_solution_size = 0;
 
   m_solved = false;
   m_reduction_solved = false;
-
-  m_graph.initialize();
 }
 
 void Problem::set_dominanting( u32 vertex ) {
   m_generate_solutions[vertex] = true;
+  m_generate_solutions_size++;
   std::vector<u32> queue;
   m_graph.observe_one( vertex, queue );
   for ( auto &w : m_graph.neighbors( vertex ) ) {
@@ -260,34 +263,33 @@ void Problem::preprocess() {
     return;
   }
 
-  std::memset( m_generate_solutions, 0,
-               ( m_graph.max_vertex() + 1 ) * sizeof( bool ) );
-  std::memset( m_graph.observed_set(), 0,
-               sizeof( bool ) * ( m_graph.max_vertex() + 1 ) );
-  m_graph.set_observed_count( 0 );
   for ( auto &v : m_pre_solution ) {
     if ( m_graph.has_vertex( v ) ) {
       set_dominanting( v );
     }
   }
   std::memcpy( m_pre_observed_set, m_graph.observed_set(),
-               m_graph.max_vertex() + 1 );
+               ( m_graph.max_vertex() + 1 ) * sizeof( bool ) );
   std::memcpy( m_pre_processing_solution, m_generate_solutions,
                sizeof( bool ) * ( m_graph.max_vertex() + 1 ) );
   m_pre_observed_count = m_graph.observed_count();
+  m_pre_processing_solution_size = m_generate_solutions_size;
+  m_graph.stash();
 }
 
 void Problem::grasp() {
   std::srand( std::time( nullptr ) );
+  m_graph.reset();
   std::memcpy( m_generate_solutions, m_pre_processing_solution,
                ( m_graph.max_vertex() + 1 ) * sizeof( bool ) );
+  m_generate_solutions_size = m_pre_processing_solution_size;
   std::memcpy( m_graph.observed_set(), m_pre_observed_set,
                sizeof( bool ) * ( m_graph.max_vertex() + 1 ) );
   m_graph.set_observed_count( m_pre_observed_count );
   //* Initialize solution with GRASP
   // TODO: Use initialize method in FSS
   while ( m_graph.observed_count() != m_graph.vertices_num() ) {
-    u32 select_v = 0;
+    u32 select_v = m_graph.max_vertex() + 1;
     fp64 score = 0;
     for ( auto &v : m_graph.vertices() ) {
       if ( !m_generate_solutions[v] && !m_excluded.contains( v ) ) {
