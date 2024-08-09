@@ -15,3 +15,9 @@ build/
 
 gurobi.log
 
+
+# solution
+
+data/solution/
+
+result/

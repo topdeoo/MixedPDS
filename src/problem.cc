@@ -238,8 +238,6 @@ void Problem::alloc_memory() {
   m_solved = false;
   m_reduction_solved = false;
 
-  std::srand( std::time( nullptr ) );
-
   m_graph.initialize();
 }
 
@@ -280,6 +278,7 @@ void Problem::preprocess() {
 }
 
 void Problem::grasp() {
+  std::srand( std::time( nullptr ) );
   std::memcpy( m_generate_solutions, m_pre_processing_solution,
                ( m_graph.max_vertex() + 1 ) * sizeof( bool ) );
   std::memcpy( m_graph.observed_set(), m_pre_observed_set,
