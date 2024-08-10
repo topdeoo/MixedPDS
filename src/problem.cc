@@ -417,6 +417,7 @@ void Problem::start() {
       non_imporve += 1;
     } else if ( m_current_solution.size() < m_best_solution.size() ) {
       m_best_solution = m_current_solution;
+      non_imporve = 0;
     }
 
     adaptive();
