@@ -14,6 +14,7 @@
 #include <gurobi_c.h>
 #include <iostream>
 #include <memory>
+#include <string>
 #include <sys/resource.h>
 
 // void Problem::initialize_solver() {
@@ -187,12 +188,20 @@ void Problem::parse() {
     exit( EXIT_FAILURE );
   }
 
-  std::string t;
-  std::cin >> t;
-
-  //* Input the whole graph
   u32 n, m, u, v;
-  std::cin >> n >> m;
+
+  std::string first_line;
+
+  std::getline( std::cin, first_line );
+
+  if ( first_line.find( "ms" ) != std::string::npos ) {
+    std::cin >> n >> m;
+  } else {
+    n = static_cast<u32>( std::stoul( first_line ) );
+    m = static_cast<u32>(
+        std::stoul( first_line.substr( first_line.find( ' ' ) + 1 ) ) );
+  }
+
   for ( u32 i = 0; i < m; i++ ) {
     std::cin >> u >> v;
     m_graph.add_edge( u, v );
