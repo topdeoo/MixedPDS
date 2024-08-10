@@ -3,7 +3,6 @@
 #include "options.hh"
 #include "solver.hh"
 #include "types.hh"
-#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -208,6 +207,8 @@ void Problem::parse() {
     m_graph.add_edge( v, u );
   }
 
+  alloc_memory();
+
   //* Input the pre-dominating set
   std::cin >> n;
   for ( u32 i = 0; i < n; i++ ) {
@@ -229,18 +230,10 @@ void Problem::parse() {
     m_graph.set_non_propagating( v );
   }
 
-  alloc_memory();
-
   m_graph.initialize();
 }
 
 void Problem::alloc_memory() {
-  // TODO: More array data structure
-  age0 = new i32[m_graph.max_vertex() + 1];
-  age1 = new i32[m_graph.max_vertex() + 1];
-  std::fill( age0, age0 + m_graph.max_vertex() + 1, -1 );
-  std::fill( age1, age1 + m_graph.max_vertex() + 1, -1 );
-
   m_generate_solutions = new bool[m_graph.max_vertex() + 1]();
   m_generate_solutions_size = 0;
   m_pre_processing_solution = new bool[m_graph.max_vertex() + 1]();
@@ -275,70 +268,6 @@ void Problem::preprocess() {
   for ( auto &v : m_pre_solution ) {
     if ( m_graph.has_vertex( v ) ) {
       set_dominanting( v );
-    }
-  }
-  std::memcpy( m_pre_observed_set, m_graph.observed_set(),
-               ( m_graph.max_vertex() + 1 ) * sizeof( bool ) );
-  std::memcpy( m_pre_processing_solution, m_generate_solutions,
-               sizeof( bool ) * ( m_graph.max_vertex() + 1 ) );
-  m_pre_observed_count = m_graph.observed_count();
-  m_pre_processing_solution_size = m_generate_solutions_size;
-  m_graph.stash();
-}
-
-void Problem::grasp() {
-  std::srand( std::time( nullptr ) );
-  m_graph.reset();
-  std::memcpy( m_generate_solutions, m_pre_processing_solution,
-               ( m_graph.max_vertex() + 1 ) * sizeof( bool ) );
-  m_generate_solutions_size = m_pre_processing_solution_size;
-  std::memcpy( m_graph.observed_set(), m_pre_observed_set,
-               sizeof( bool ) * ( m_graph.max_vertex() + 1 ) );
-  m_graph.set_observed_count( m_pre_observed_count );
-  //* Initialize solution with GRASP
-  // TODO: Use initialize method in FSS
-  while ( m_graph.observed_count() != m_graph.vertices_num() ) {
-    u32 select_v = m_graph.max_vertex() + 1;
-    fp64 score = 0;
-    for ( auto &v : m_graph.vertices() ) {
-      if ( !m_generate_solutions[v] && !m_excluded.contains( v ) ) {
-        auto v_score =
-            m_graph.degree( v ) *
-            static_cast<fp64>( std::rand() / static_cast<fp64>( RAND_MAX ) + 1 );
-        if ( v_score > score ) {
-          score = v_score;
-          select_v = v;
-        }
-      }
-    }
-    set_dominanting( select_v );
-  }
-  m_solved = true;
-}
-
-void Problem::adaptive() {
-  for ( auto &v : m_graph.vertices() ) {
-    if ( age0[v] >= 0 && age1[v] >= 0 ) {
-      if ( !m_best_solution.contains( v ) ) {
-        age0[v] = 0;
-        age1[v] += 1;
-        if ( age1[v] == m_options.age_max ) {
-          age1[v] = -1;
-        }
-      } else {
-        age1[v] = 0;
-        age0[v] += 1;
-        if ( age0[v] == m_options.age_max ) {
-          age0[v] = -1;
-        }
-      }
-    } else {
-      if ( age0[v] >= 0 ) {
-        age0[v] = 0;
-      }
-      if ( age1[v] >= 0 ) {
-        age1[v] = 0;
-      }
     }
   }
 }
@@ -401,40 +330,15 @@ void Problem::start() {
   if ( m_solved ) {
     return;
   }
-  u64 timestamp = 0, cutoff = static_cast<u64>( m_options.cutoff_time * 1000000 );
-  u32 counter = 0, non_imporve = 0;
   for ( auto &v : m_graph.vertices() ) {
     m_best_solution.insert( v );
   }
-  while ( timestamp < cutoff && non_imporve <= 50 ) {
-    //* Generate $n_a$ solutions
-    for ( u32 i = 0; i < m_options.na; i++ ) {
-      grasp();
-      for ( auto &v : m_graph.vertices() ) {
-        if ( m_generate_solutions[v] && age1[v] == -1 ) {
-          age1[v] = 0;
-        }
-        if ( !m_generate_solutions[v] && age0[v] == -1 ) {
-          age0[v] = 0;
-        }
-      }
-    }
-    //* Solve problem with MILP solver
-    initialize_solver();
-    m_solver->start( m_options.t_milp, m_current_solution );
-    if ( m_current_solution.size() == m_best_solution.size() ) {
-      non_imporve += 1;
-    } else if ( m_current_solution.size() < m_best_solution.size() ) {
-      m_best_solution = m_current_solution;
-      non_imporve = 0;
-    }
 
-    adaptive();
-    counter += 1;
-    if ( counter == 10 ) {
-      timestamp = process_time() - timestamp;
-      counter = 0;
-    }
+  //* Solve problem with MILP solver
+  initialize_solver();
+  m_solver->start( m_options.t_milp, m_current_solution );
+  if ( m_current_solution.size() < m_best_solution.size() ) {
+    m_best_solution = m_current_solution;
   }
 }
 

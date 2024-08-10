@@ -51,8 +51,6 @@ private:
 public:
   Problem();
   ~Problem() {
-    delete[] age0;
-    delete[] age1;
     delete[] m_generate_solutions;
     delete[] m_pre_processing_solution;
     delete[] m_pre_observed_set;
@@ -71,11 +69,11 @@ public:
   inline bool reduction_solved() const { return m_reduction_solved; }
 
   inline bool is_fixed_in( u32 vertex ) const {
-    return age0[vertex] == -1 && age1[vertex] >= 0;
+    return m_pre_solution.contains( vertex );
   }
 
   inline bool is_fixed_out( u32 vertex ) const {
-    return age1[vertex] == -1 && age0[vertex] >= 0;
+    return m_excluded.contains( vertex );
   }
 
   void parse();
@@ -84,8 +82,6 @@ public:
   void set_dominanting( u32 );
 
   void preprocess();
-  void grasp();
-  void adaptive();
   void start();
 
   void initialize_solver();
